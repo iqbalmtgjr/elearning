@@ -1,0 +1,312 @@
+@import 'tailwindcss';
+
+@source '../../app/Support';
+
+/*
+ * Design token PKBM BHP.
+ * Nama token mengikuti ekspor Stitch (Material 3) agar markup mudah dipindah,
+ * nilainya dikoreksi ke warna resmi: #005840, #D1F843, #ECF0EF.
+ */
+@theme {
+    --font-sans: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    /* Identitas */
+    --color-primary: #003e2c;
+    --color-primary-container: #005840;
+    /* Deep Green resmi */
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #84ccad;
+    --color-primary-fixed: #a8f2d1;
+    --color-primary-fixed-dim: #8dd5b6;
+    --color-on-primary-fixed-variant: #00513b;
+    --color-secondary: #526600;
+    --color-secondary-container: #d1f843;
+    /* Lime Green resmi */
+    --color-secondary-fixed-dim: #b0d51a;
+    --color-on-secondary-fixed: #1e293b;
+
+    /* Permukaan */
+    --color-surface: #ecf0ef;
+    /* Soft Gray resmi */
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f4f7f6;
+    --color-surface-container: #e8eeec;
+    --color-surface-container-high: #dfe7e4;
+    --color-surface-container-highest: #d3ddd9;
+    --color-on-surface: #1e293b;
+    --color-on-surface-variant: #64748b;
+    --color-outline: #7c8a85;
+    --color-outline-variant: #e2e8f0;
+    --color-inverse-surface: #14231e;
+
+    /* Status */
+    --color-success: #16a34a;
+    --color-success-ink: #15803d;
+    /* teks di atas latar hijau muda (kontras AA) */
+    --color-success-container: #dcfce7;
+    --color-danger-ink: #b91c1c;
+    --color-ink-2: #475569;
+    --color-warning: #f59e0b;
+    --color-warning-ink: #b45309;
+    --color-warning-container: #fef3c7;
+    --color-danger: #dc2626;
+    --color-danger-container: #fee2e2;
+
+    /* Tipografi (DESIGN.md) */
+    --text-headline-xl: 28px;
+    --text-headline-xl--line-height: 36px;
+    --text-headline-xl--letter-spacing: -0.02em;
+    --text-headline-xl--font-weight: 700;
+    --text-headline-lg: 22px;
+    --text-headline-lg--line-height: 30px;
+    --text-headline-lg--letter-spacing: -0.01em;
+    --text-headline-lg--font-weight: 600;
+    --text-headline-md: 18px;
+    --text-headline-md--line-height: 26px;
+    --text-headline-md--font-weight: 600;
+    --text-body-lg: 15px;
+    --text-body-lg--line-height: 24px;
+    --text-body-md: 14px;
+    --text-body-md--line-height: 22px;
+    --text-label-md: 13px;
+    --text-label-md--line-height: 18px;
+    --text-label-md--font-weight: 600;
+    --text-label-sm: 12px;
+    --text-label-sm--line-height: 16px;
+    --text-label-sm--font-weight: 500;
+    --text-caption: 11px;
+    --text-caption--line-height: 14px;
+    --text-caption--letter-spacing: 0.04em;
+    --text-caption--font-weight: 600;
+
+    /* Spasi */
+    --spacing-gutter: 1.25rem;
+    --spacing-margin: 2rem;
+    --spacing-space-xs: 0.25rem;
+    --spacing-space-sm: 0.5rem;
+    --spacing-space-md: 1rem;
+    --spacing-space-lg: 1.5rem;
+    --spacing-space-xl: 2rem;
+
+    --shadow-card: 0 1px 3px 0 rgb(0 40 29 / 0.04), 0 1px 2px -1px rgb(0 40 29 / 0.02);
+    --shadow-hover: 0 4px 6px -1px rgb(0 40 29 / 0.07), 0 2px 4px -2px rgb(0 40 29 / 0.04);
+    --shadow-pop: 0 10px 15px -3px rgb(0 40 29 / 0.08), 0 4px 6px -4px rgb(0 40 29 / 0.04);
+    --shadow-modal: 0 20px 25px -5px rgb(0 40 29 / 0.12);
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-surface text-body-md text-on-surface antialiased;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-primary-container;
+    }
+
+    /* Kolom grid tidak boleh melebar mengikuti konten panjang (nama file, judul) di layar sempit. */
+    .grid>* {
+        min-width: 0;
+    }
+
+    dialog::backdrop {
+        background: rgb(30 41 59 / 0.4);
+    }
+}
+
+@layer components {
+    .ms {
+        font-family: 'Material Symbols Outlined';
+        font-size: 20px;
+        line-height: 1;
+        font-variation-settings: 'FILL' 0, 'wght' 400;
+        user-select: none;
+        @apply inline-block shrink-0 align-middle normal-case not-italic;
+    }
+
+    .ms-fill {
+        font-variation-settings: 'FILL' 1, 'wght' 400;
+    }
+
+    .card {
+        @apply rounded-xl border border-outline-variant/70 bg-surface-container-lowest shadow-card;
+    }
+
+    .card-hover {
+        @apply transition hover:border-primary-container/30 hover:shadow-hover;
+    }
+
+    .btn {
+        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-label-md whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+    }
+
+    .btn-sm {
+        @apply min-h-8 px-3 py-1.5 text-label-sm font-semibold;
+    }
+
+    .btn-primary {
+        @apply bg-primary-container text-on-primary shadow-sm hover:bg-primary;
+    }
+
+    .btn-accent {
+        @apply bg-secondary-container font-bold text-on-secondary-fixed shadow-sm hover:bg-secondary-fixed-dim;
+    }
+
+    .btn-soft {
+        @apply bg-surface-container-low text-primary-container hover:bg-surface-container;
+    }
+
+    .btn-ghost {
+        @apply border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface;
+    }
+
+    .btn-danger {
+        @apply bg-danger text-white hover:bg-red-700;
+    }
+
+    .btn-icon {
+        @apply inline-flex size-10 items-center justify-center rounded-lg text-on-surface-variant transition hover:bg-surface-container-low hover:text-on-surface;
+    }
+
+    .label {
+        @apply mb-1.5 block text-label-md text-on-surface;
+    }
+
+    .input {
+        @apply block min-h-11 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md text-on-surface transition placeholder:text-outline focus:border-primary-container focus:ring-3 focus:ring-primary-container/15 focus:outline-none;
+    }
+
+    select.input {
+        @apply cursor-pointer appearance-none bg-[length:20px] bg-[right_10px_center] bg-no-repeat pr-9;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+
+    .eyebrow {
+        @apply text-caption tracking-wider text-on-surface-variant uppercase;
+    }
+
+    /* Konten materi dari editor (HTML) */
+    .prose-materi {
+        @apply space-y-4 text-body-lg font-normal text-on-surface/85;
+        line-height: 1.8;
+    }
+
+    .prose-materi h2 {
+        @apply pt-4 text-headline-lg text-on-surface;
+    }
+
+    .prose-materi h3 {
+        @apply text-headline-md text-on-surface;
+    }
+
+    .prose-materi mark {
+        @apply rounded bg-secondary-container/60 px-1 font-semibold text-on-surface;
+    }
+
+    .prose-materi blockquote {
+        @apply rounded-xl border-l-4 border-primary-container bg-surface-container-low p-5 italic;
+    }
+
+    .prose-materi ul {
+        @apply list-disc space-y-1 pl-6;
+    }
+}
+
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ── Animasi Landing Page & Interaksi Mikro ──────────────────────────── */
+@keyframes float-slow {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes float-delayed {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-8px) rotate(1deg);
+    }
+}
+
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.75;
+        transform: scale(1.06);
+    }
+}
+
+@keyframes shimmer-sweep {
+    0% {
+        transform: translateX(-120%) skewX(-15deg);
+    }
+
+    100% {
+        transform: translateX(220%) skewX(-15deg);
+    }
+}
+
+.animate-float-slow {
+    animation: float-slow 5.5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+    animation: float-delayed 6.5s ease-in-out 1.2s infinite;
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 7s ease-in-out infinite;
+}
+
+.reveal:not([data-revealed='1']) {
+    opacity: 0;
+    transform: translateY(26px);
+}
+
+.reveal {
+    transition:
+        opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .animate-float-slow,
+    .animate-float-delayed,
+    .animate-pulse-glow {
+        animation: none !important;
+    }
+
+    .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
