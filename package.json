@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "node scripts/icons.mjs && vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "rilisweb": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/upload-ftp.ps1"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

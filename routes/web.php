@@ -81,6 +81,8 @@ Route::middleware(['auth', 'can:admin'])->group(function () use ($resource) {
     Route::get('/admin/laporan/{jenis}/cetak', [AdminController::class, 'cetak'])->whereIn('jenis', ['nilai', 'kehadiran', 'progres', 'peserta', 'tutor', 'aktivitas']);
     Route::get('/admin/pengaturan', [AdminController::class, 'pengaturan']);
     Route::post('/admin/pengaturan', [AdminController::class, 'simpanPengaturan']);
+    Route::post('/admin/kelas/{id}/peserta', [AdminController::class, 'enrolPeserta'])->whereNumber('id');
+    Route::delete('/admin/kelas/{id}/peserta/{siswa}', [AdminController::class, 'keluarkanPeserta'])->whereNumber(['id', 'siswa']);
     $resource('admin', Resources::ADMIN);
 });
 

@@ -115,7 +115,7 @@ class BersamaController extends Controller
             'penting' => $p->penting,
             'target' => $p->target,
             'lampiran' => $p->lampiran_path ? [['nama' => $p->lampiran_nama, 'url' => '/berkas/pengumuman/' . $p->id]] : [],
-            'penulis_id' => $p->penulis_id
+            'penulis_id' => $p->penulis_id,
         ];
     }
 
@@ -145,7 +145,7 @@ class BersamaController extends Controller
             'target' => 'required|in:semua,siswa,tutor',
             'isi' => 'required|max:10000',
             'penting' => 'boolean',
-            'lampiran' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
+            'lampiran' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
         ]);
         if ($f = Resources::simpanBerkas($d['lampiran'] ?? null, 'pengumuman', $p?->lampiran_path)) {
             [$d['lampiran_path'], $d['lampiran_nama']] = [$f['path'], $f['nama']];
@@ -220,7 +220,7 @@ class BersamaController extends Controller
                 'Tanggal Lahir' => $tgl($u->tanggal_lahir),
                 'Telepon' => $u->telepon ?? '—',
                 'Alamat' => $u->alamat ?? '—',
-                'Terdaftar Sejak' => Akademik::tgl($u->created_at, 'F Y')
+                'Terdaftar Sejak' => Akademik::tgl($u->created_at, 'F Y'),
             ],
             'tutor' => [
                 'Nomor Induk' => $u->nomor_induk ?? '—',
@@ -229,7 +229,7 @@ class BersamaController extends Controller
                 'Kelas Diampu' => $u->mengajar->pluck('kelas.nama')->unique()->join(', ') ?: '—',
                 'Pendidikan' => $u->pendidikan ?? '—',
                 'Telepon' => $u->telepon ?? '—',
-                'Bergabung Sejak' => Akademik::tgl($u->created_at, 'F Y')
+                'Bergabung Sejak' => Akademik::tgl($u->created_at, 'F Y'),
             ],
             default => ['Jabatan' => $u->jabatan ?? 'Administrator', 'Hak Akses' => 'Administrator penuh', 'Telepon' => $u->telepon ?? '—', 'Bergabung Sejak' => Akademik::tgl($u->created_at, 'F Y')],
         };
@@ -345,7 +345,7 @@ class BersamaController extends Controller
                 'mapel' => $pengajaran->count(),
                 'jadwal' => $k->jadwal ?? '—',
                 'progres' => $acuan ? Akademik::progres($acuan)[2] : $progresKelas(),
-                'deskripsi' => "Rombongan belajar {$k->program->nama} {$k->program->setara} dengan tutorial tatap muka terjadwal dan pembelajaran daring mandiri melalui PKBM BHP."
+                'deskripsi' => "Rombongan belajar {$k->program->nama} {$k->program->setara} dengan tutorial tatap muka terjadwal dan pembelajaran daring mandiri melalui PKBM BHP.",
             ],
             'mapel' => $pengajaran->values()->map(fn($p, $i) => [
                 'id' => $p->id,
@@ -353,12 +353,15 @@ class BersamaController extends Controller
                 'tutor' => $p->tutor->name,
                 'icon' => $p->mapel->icon,
                 'tone' => $tones[$i % 3],
-                'progres' => $acuan ? Akademik::progres($acuan, $p->id)[2] : $progresKelas($p->id)
+                'progres' => $acuan ? Akademik::progres($acuan, $p->id)[2] : $progresKelas($p->id),
             ]),
             'modul' => SiswaController::modulMateri($u, $k->id),
             'bisaRapor' => $u->role === 'admin' || $k->wali_id === $u->id,
             'peserta' => $siswa->map(fn($s) => ['id' => $s->id, 'nama' => $s->name, 'nisn' => $s->nomor_induk, 'progres' => $u->role === 'siswa' ? null : Akademik::progres($s)[2]]),
             'aktivitas' => $aktivitas,
+            // Calon peserta untuk enrol (admin saja): siswa di luar kelas ini beserta kelas asalnya.
+            'calon' => $u->role === 'admin' ? User::siswa()->with('kelas.program')->where(fn($q) => $q->whereNull('kelas_id')->orWhere('kelas_id', '!=', $k->id))->orderBy('name')->get()
+                ->map(fn($s) => ['id' => $s->id, 'nama' => $s->name, 'nisn' => $s->nomor_induk, 'kelas' => $s->kelas ? $s->kelas->program->nama . ' ' . $s->kelas->nama : null]) : [],
         ]);
     }
 
@@ -404,16 +407,16 @@ class BersamaController extends Controller
                     'nama' => $m->file_nama,
                     'url' => '/berkas/materi/' . $m->id,
                     'pdf' => str_ends_with(strtolower($m->file_path), '.pdf'),
-                    'ukuran' => Storage::exists($m->file_path) ? max(1, round(Storage::size($m->file_path) / 1024)) . ' KB' : null
+                    'ukuran' => Storage::exists($m->file_path) ? max(1, round(Storage::size($m->file_path) / 1024)) . ' KB' : null,
                 ] : null,
-                'bisaUbah' => $u->role === 'admin' || $m->pengajaran->tutor_id === $u->id
+                'bisaUbah' => $u->role === 'admin' || $m->pengajaran->tutor_id === $u->id,
             ],
             'daftar' => $urutan->where('modul', $m->modul)->values()->map(fn($x) => [
                 'id' => $x->id,
                 'judul' => $x->judul,
                 'tipe' => $x->tipe,
                 'durasi' => $x->durasi ? $x->durasi . ' menit' : '—',
-                'status' => $selesai->has($x->id) ? 'selesai' : ($x->id === $m->id ? 'sedang' : 'belum')
+                'status' => $selesai->has($x->id) ? 'selesai' : ($x->id === $m->id ? 'sedang' : 'belum'),
             ]),
             'sebelumnya' => $item($pos > 0 ? $urutan[$pos - 1] : null),
             'berikutnya' => $item($urutan[$pos + 1] ?? null),
@@ -516,7 +519,7 @@ class BersamaController extends Controller
                 'judul' => $p->mapel->nama,
                 'kelas' => $u->role === 'siswa' ? $p->tutor->name : $p->kelas->nama . ($u->role === 'admin' ? ' · ' . $p->tutor->name : ''),
                 'tempat' => $p->tempat ?? '—',
-                'mode' => $p->mode
+                'mode' => $p->mode,
             ]),
             'hariIni' => now()->dayOfWeekIso - 1,
             'minggu' => ['label' => Akademik::tgl($senin, 'j') . '–' . Akademik::tgl($senin->copy()->addDays(6), 'j F Y'), 'tanggal' => collect(range(0, 6))->map(fn($i) => $senin->copy()->addDays($i)->day)],
@@ -527,7 +530,7 @@ class BersamaController extends Controller
                 'offset' => $bulan->dayOfWeekIso - 1,
                 'hari' => $bulan->daysInMonth,
                 'hariIni' => now()->day,
-                'tanda' => (object) $agenda->filter(fn($a) => $a['t']->isSameMonth($bulan))->mapWithKeys(fn($a) => [$a['t']->day => $a['jenis']])->all()
+                'tanda' => (object) $agenda->filter(fn($a) => $a['t']->isSameMonth($bulan))->mapWithKeys(fn($a) => [$a['t']->day => $a['jenis']])->all(),
             ],
         ]);
     }
@@ -554,7 +557,7 @@ class BersamaController extends Controller
                 'Program' => $s->kelas ? $s->kelas->program->nama . ' (' . $s->kelas->program->setara . ')' : '—',
                 'Kelas' => $s->kelas?->nama ?? '—',
                 'Wali Kelas' => $s->kelas?->wali?->name ?? '—',
-                'Periode' => $periode
+                'Periode' => $periode,
             ],
             'kolom' => ['Mata Pelajaran', 'Tutor', 'Rata-rata Tugas', 'Rata-rata Ujian', 'Nilai Akhir', 'Predikat', 'Keterangan'],
             'baris' => $nilai->map(fn($n) => [
@@ -564,7 +567,7 @@ class BersamaController extends Controller
                 $f($n['ujian']),
                 $f($n['akhir']),
                 $n['akhir'] === null ? '—' : ($n['akhir'] >= 90 ? 'A' : ($n['akhir'] >= 80 ? 'B' : ($n['akhir'] >= $kkm ? 'C' : 'D'))),
-                $n['akhir'] === null ? 'Belum ada nilai' : ($n['akhir'] >= $kkm ? 'Tuntas' : 'Belum tuntas')
+                $n['akhir'] === null ? 'Belum ada nilai' : ($n['akhir'] >= $kkm ? 'Tuntas' : 'Belum tuntas'),
             ])->all(),
             'ringkas' => [
                 'Rata-rata nilai akhir' => $ada->isEmpty() ? '—' : $f($ada->avg()),
@@ -573,7 +576,7 @@ class BersamaController extends Controller
                 'Hadir' => $hadir['Hadir'] ?? 0,
                 'Izin' => $hadir['Izin'] ?? 0,
                 'Sakit' => $hadir['Sakit'] ?? 0,
-                'Alpa' => $hadir['Alpa'] ?? 0
+                'Alpa' => $hadir['Alpa'] ?? 0,
             ],
             'ttd' => [['Mengetahui,', 'Kepala ' . Akademik::pengaturan('nama_lembaga'), Akademik::pengaturan('kepala')], ['Wali Kelas,', $s->kelas?->nama ?? '', $s->kelas?->wali?->name]],
         ]);

@@ -1,12 +1,26 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Avatar, Badge, Card, Icon, MAPEL_TONE, Progress, Tabs, Timeline, cx } from '../../Components/ui';
+import { Avatar, Badge, Card, Confirm, Icon, MAPEL_TONE, Modal, Progress, SearchInput, Tabs, Timeline, cx } from '../../Components/ui';
 import { STATUS_MATERI, TIPE } from '../Siswa/Materi';
 
-export default function KelasDetail({ kelas: k, mapel, modul, peserta, aktivitas, bisaRapor }) {
+export default function KelasDetail({ kelas: k, mapel, modul, peserta, aktivitas, bisaRapor, calon = [] }) {
     const { role } = usePage().props.auth.user;
     const [tab, setTab] = useState('materi');
     const [buka, setBuka] = useState(0);
+    const [enrol, setEnrol] = useState(false);
+    const [cari, setCari] = useState('');
+    const [pilih, setPilih] = useState([]);
+    const [keluar, setKeluar] = useState(null);
+    const [proses, setProses] = useState(false);
+    const q = cari.toLowerCase();
+    const calonTampil = calon.filter((c) => `${c.nama} ${c.nisn} ${c.kelas ?? ''}`.toLowerCase().includes(q));
+    const tutupEnrol = () => {
+        setEnrol(false);
+        setPilih([]);
+        setCari('');
+    };
+    const simpanEnrol = () =>
+        router.post(`/admin/kelas/${k.id}/peserta`, { siswa: pilih }, { preserveScroll: true, onStart: () => setProses(true), onFinish: () => setProses(false), onSuccess: tutupEnrol });
     const induk = { admin: ['Data Kelas', '/admin/kelas'], tutor: ['Kelas Saya', '/tutor/kelas'], siswa: ['Kelas Saya', '/siswa/kelas'] }[role];
 
     return (
@@ -126,6 +140,15 @@ export default function KelasDetail({ kelas: k, mapel, modul, peserta, aktivitas
 
             {tab === 'peserta' && (
                 <Card className="overflow-hidden">
+                    {role === 'admin' && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/70 p-4 sm:px-5">
+                            <p className="text-label-sm text-on-surface-variant">Peserta didik otomatis mengikuti semua mata pelajaran di kelas ini.</p>
+                            <button type="button" className="btn btn-sm btn-primary" onClick={() => setEnrol(true)}>
+                                <Icon n="group_add" className="!text-[18px]" />
+                                Tambah Peserta
+                            </button>
+                        </div>
+                    )}
                     <ul className="divide-y divide-outline-variant/70">
                         {peserta.map((p) => (
                             <li key={p.nisn} className="flex items-center gap-3 p-4 sm:px-5">
@@ -146,6 +169,12 @@ export default function KelasDetail({ kelas: k, mapel, modul, peserta, aktivitas
                                         <span className="hidden sm:inline">Rapor</span>
                                     </a>
                                 )}
+                                {role === 'admin' && (
+                                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => setKeluar(p)} aria-label={`Keluarkan ${p.nama}`}>
+                                        <Icon n="person_remove" className="!text-[16px] text-danger" />
+                                        <span className="hidden sm:inline">Keluarkan</span>
+                                    </button>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -160,6 +189,61 @@ export default function KelasDetail({ kelas: k, mapel, modul, peserta, aktivitas
                     <Timeline items={aktivitas} />
                 </Card>
             )}
+
+            <Modal
+                open={enrol}
+                onClose={tutupEnrol}
+                title="Tambah Peserta Didik"
+                desc={`Pilih peserta didik untuk dimasukkan ke ${k.program} — ${k.nama}.`}
+                icon="group_add"
+                footer={
+                    <>
+                        <button type="button" className="btn btn-ghost" onClick={tutupEnrol}>
+                            Batal
+                        </button>
+                        <button type="button" className="btn btn-primary" disabled={!pilih.length || proses} onClick={simpanEnrol}>
+                            Tambahkan{pilih.length ? ` (${pilih.length})` : ''}
+                        </button>
+                    </>
+                }
+            >
+                <SearchInput value={cari} onChange={setCari} placeholder="Cari nama, NISN, atau kelas…" />
+                {pilih.some((id) => calon.find((c) => c.id === id)?.kelas) && (
+                    <p className="mt-3 rounded-lg bg-warning/10 p-3 text-label-sm text-warning-ink">Peserta yang sudah punya kelas akan dipindahkan ke kelas ini.</p>
+                )}
+                <ul className="mt-3 divide-y divide-outline-variant/70 rounded-lg ring-1 ring-outline-variant/70">
+                    {calonTampil.map((c) => (
+                        <li key={c.id}>
+                            <label className="flex cursor-pointer items-center gap-3 p-3 hover:bg-surface-container-low">
+                                <input
+                                    type="checkbox"
+                                    className="size-4 accent-primary"
+                                    checked={pilih.includes(c.id)}
+                                    onChange={(e) => setPilih(e.target.checked ? [...pilih, c.id] : pilih.filter((id) => id !== c.id))}
+                                />
+                                <Avatar name={c.nama} size="sm" />
+                                <span className="min-w-0 flex-1">
+                                    <span className="block text-label-md">{c.nama}</span>
+                                    <span className="block text-label-sm text-on-surface-variant">NISN {c.nisn}</span>
+                                </span>
+                                <Badge tone={c.kelas ? 'neutral' : 'warning'}>{c.kelas ?? 'Belum ada kelas'}</Badge>
+                            </label>
+                        </li>
+                    ))}
+                    {!calonTampil.length && <li className="p-6 text-center text-label-sm text-on-surface-variant">Tidak ada peserta didik yang cocok.</li>}
+                </ul>
+            </Modal>
+
+            <Confirm
+                open={!!keluar}
+                onClose={() => setKeluar(null)}
+                onConfirm={() => router.delete(`/admin/kelas/${k.id}/peserta/${keluar.id}`, { preserveScroll: true, onFinish: () => setKeluar(null) })}
+                title="Keluarkan dari kelas?"
+                desc={keluar && `${keluar.nama} tidak lagi bisa mengakses mata pelajaran, materi, tugas, dan ujian kelas ini. Nilai & riwayat tetap tersimpan.`}
+                confirmLabel="Keluarkan"
+                icon="person_remove"
+                danger
+            />
         </>
     );
 }
